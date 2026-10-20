@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bütçe Cep">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Bütçe Cep</title>
+<style>
+:root{--bg:#0b1220;--panel:#131e30;--panel2:#1a2940;--text:#f3f6fb;--muted:#a7b4c8;--line:#2a3a52;--green:#43d6a0;--red:#ff7777;--blue:#7fb5ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#101827,#0b1220 320px);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 14px calc(22px + env(safe-area-inset-bottom));}
+main{max-width:720px;margin:0 auto}.top{display:flex;justify-content:space-between;align-items:center;padding:18px 2px 12px}.brand{font-size:24px;font-weight:800;letter-spacing:-.5px}.brand span{color:var(--green)}.month{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:9px;max-width:150px}
+h2{font-size:17px;margin:0 0 12px}.sub{color:var(--muted);font-size:12px}.hero{background:linear-gradient(135deg,#1d3b4a,#18273d);border:1px solid #315064;border-radius:22px;padding:19px;margin:6px 0 14px}.hero .label{color:#c0d6df;font-size:13px}.balance{font-size:32px;font-weight:800;margin:6px 0 17px;letter-spacing:-.7px;overflow-wrap:anywhere}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#ffffff0b;border:1px solid #ffffff12;border-radius:14px;padding:12px}.stat .v{font-size:17px;font-weight:750;margin-top:5px}.green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:15px 0}.tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:12px;padding:11px 4px;font-size:12px;font-weight:700}.tab.active{background:#21463f;color:#c9ffed;border-color:#327866}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:15px;margin:12px 0}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.field{margin:10px 0}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;background:#0b1423;color:var(--text);border:1px solid var(--line);border-radius:11px;padding:12px;font:inherit;min-width:0}.field textarea{resize:vertical}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:12px;background:var(--green);color:#06261c;font-weight:800;padding:13px 15px;font:inherit;cursor:pointer}.btn.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text)}.btn.danger{background:#4b252e;color:#ffdce0}.btn.full{width:100%}.hidden{display:none!important}.entry{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.entry:last-child{border-bottom:0}.entry-title{font-weight:700;font-size:14px}.entry-meta{font-size:12px;color:var(--muted);margin-top:4px}.amount{font-weight:800;white-space:nowrap}.empty{color:var(--muted);font-size:13px;padding:15px 0;text-align:center}.pill{font-size:11px;padding:4px 7px;border-radius:7px;background:var(--panel2);color:var(--muted)}.small{font-size:12px;color:var(--muted)}.progress{height:8px;background:#0a1321;border-radius:99px;overflow:hidden;margin-top:9px}.progress div{height:100%;background:var(--green);width:0}.notice{font-size:12px;color:var(--muted);line-height:1.5;padding:6px 2px 14px}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions .btn{padding:8px 10px;font-size:12px}.footer{text-align:center;color:#71819a;font-size:11px;padding:16px 0}
+@media(min-width:600px){.tabs{gap:10px}.tab{font-size:14px}.balance{font-size:38px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top"><div><div class="brand">Bütçe <span>Cep</span></div><div class="sub">Kişisel finans takibin</div></div><input class="month" id="monthPick" type="month" aria-label="Rapor ayı"></header>
+  <section class="hero">
+    <div class="label">Bu ay kalan net tutar</div><div class="balance" id="netBalance">₺0,00</div>
+    <div class="stats"><div class="stat"><div class="sub">Gelir</div><div class="v green" id="incomeTotal">₺0,00</div></div><div class="stat"><div class="sub">Gider</div><div class="v red" id="expenseTotal">₺0,00</div></div></div>
+  </section>
+  <nav class="tabs">
+    <button class="tab active" data-tab="overview">Özet</button><button class="tab" data-tab="add">Ekle</button><button class="tab" data-tab="debts">Borçlar</button><button class="tab" data-tab="reports">Raporlar</button>
+  </nav>
+  <section id="overview">
+    <div class="panel"><div class="row"><h2>Bu ayın özeti</h2><span class="pill" id="selectedMonthLabel"></span></div><div class="row"><span class="small">Maaş / aylık bütçe</span><strong id="salaryLabel">Ayarlanmadı</strong></div><div class="progress"><div id="budgetProgress"></div></div><div class="small" id="budgetHint" style="margin-top:7px">Maaş ve bütçeni ayarlayarak başlayabilirsin.</div></div>
+    <div class="panel"><div class="row"><h2>Son işlemler</h2><button class="btn secondary" id="goAdd">+ Ekle</button></div><div id="recentList"></div></div>
+    <div class="panel"><div class="row"><h2>Borç özeti</h2><span class="pill">Kartlar dahil</span></div><div class="row"><span class="small">Kalan toplam borç</span><strong class="red" id="debtSummary">₺0,00</strong></div></div>
+  </section>
+  <section id="add" class="hidden">
+    <div class="panel"><h2>Gelir veya gider ekle</h2>
+      <form id="entryForm">
+        <div class="two"><div class="field"><label>İşlem türü</label><select id="kind"><option value="expense">Gider</option><option value="income">Gelir</option></select></div><div class="field"><label>Tutar (₺)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00" required></div></div>
+        <div class="two"><div class="field"><label>Kategori</label><select id="category"></select></div><div class="field"><label>Tarih</label><input id="entryDate" type="date" required></div></div>
+        <div class="field"><label>Açıklama (isteğe bağlı)</label><input id="note" maxlength="100" placeholder="Örn. market alışverişi"></div>
+        <button class="btn full" type="submit">İşlemi kaydet</button>
+      </form>
+    </div>
+    <div class="panel"><h2>Maaş ve bütçe</h2><form id="budgetForm"><div class="two"><div class="field"><label>Aylık maaş / gelir (₺)</label><input id="salary" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div><div class="field"><label>Aylık harcama limiti (₺)</label><input id="budget" type="number" min="0" step="0.01" inputmode="decimal" placeholder="İsteğe bağlı"></div></div><button class="btn secondary full" type="submit">Bütçeyi kaydet</button></form></div>
+  </section>
+  <section id="debts" class="hidden">
+    <div class="panel"><h2>Borç / kredi kartı ekle</h2><form id="debtForm"><div class="field"><label>Banka / borç adı</label><input id="debtName" maxlength="60" placeholder="Örn. Kredi kartım" required></div><div class="two"><div class="field"><label>Toplam borç (₺)</label><input id="debtAmount" type="number" min="0.01" step="0.01" inputmode="decimal" required></div><div class="field"><label>Tür</label><select id="debtType"><option>Kredi kartı</option><option>Ek hesap</option><option>İhtiyaç kredisi</option><option>Kişisel borç</option><option>Diğer</option></select></div></div><button class="btn full" type="submit">Borcu ekle</button></form></div>
+    <div class="panel"><h2>Borçlarım</h2><div id="debtList"></div></div>
+  </section>
+  <section id="reports" class="hidden">
+    <div class="panel"><h2>Aylık rapor</h2><div class="row"><span class="small">Toplam gelir</span><strong class="green" id="reportIncome">₺0,00</strong></div><div class="row" style="margin-top:10px"><span class="small">Toplam gider</span><strong class="red" id="reportExpense">₺0,00</strong></div><div class="row" style="margin-top:10px"><span class="small">Net fark</span><strong id="reportNet">₺0,00</strong></div><div class="row" style="margin-top:10px"><span class="small">İşlem sayısı</span><strong id="reportCount">0</strong></div></div>
+    <div class="panel"><h2>Kategorilere göre giderler</h2><div id="categoryReport"></div></div>
+    <div class="panel"><h2>Verilerin</h2><p class="small">Kayıtların bu cihazdaki tarayıcıda saklanır. Telefon değiştirir veya tarayıcı verilerini temizlersen kayıtlar silinebilir. Düzenli yedek al.</p><div class="actions"><button class="btn secondary" id="exportBtn">Yedeği indir</button><button class="btn secondary" id="importBtn">Yedek yükle</button><input id="importFile" type="file" accept="application/json,.json" class="hidden"><button class="btn danger" id="clearBtn">Tüm verileri sil</button></div></div>
+  </section>
+  <div class="notice">🔒 Veriler cihazında tutulur; banka hesabına bağlanmaz. Önemli kayıtlar için Raporlar bölümünden yedek indir.</div>
+  <div class="footer">Bütçe Cep · Kişisel kullanım için</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const today=new Date();const monthNow=()=>`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+const dateNow=()=>`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+const fmt=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(Number(n)||0);
+const defaultData={entries:[],debts:[],salary:0,budget:0};
+let data;try{data={...defaultData,...JSON.parse(localStorage.getItem('butcecep-v1')||'{}')}}catch(e){data={...defaultData}}
+function save(){localStorage.setItem('butcecep-v1',JSON.stringify(data));render()}
+function monthEntries(){const m=$('monthPick').value;return data.entries.filter(e=>e.date&&e.date.slice(0,7)===m)}
+function total(arr,kind){return arr.filter(e=>e.kind===kind).reduce((s,e)=>s+Number(e.amount),0)}
+const cats={expense:['Market / Gıda','Ulaşım','Fatura','Kira / Ev','Sağlık','Eğlence','Alışveriş','Eğitim','Borç ödemesi','Diğer'],income:['Maaş','Ek gelir','İade','Diğer']};
+function fillCategories(){const kind=$('kind').value;const old=$('category').value;$('category').innerHTML=cats[kind].map(c=>`<option>${c}</option>`).join('');if(cats[kind].includes(old))$('category').value=old}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){
+ const arr=monthEntries(),inc=total(arr,'income'),exp=total(arr,'expense'),net=inc-exp;
+ $('netBalance').textContent=fmt(net);$('netBalance').className='balance '+(net<0?'red':'');$('incomeTotal').textContent=fmt(inc);$('expenseTotal').textContent=fmt(exp);
+ $('selectedMonthLabel').textContent=$('monthPick').value||monthNow();$('salaryLabel').textContent=fmt(data.salary);
+ const spent=exp;const lim=Number(data.budget)||Number(data.salary)||0;$('budgetProgress').style.width=lim?Math.min(100,spent/lim*100)+'%':'0%';
+ $('budgetHint').textContent=lim?`${fmt(spent)} harcandı · ${fmt(Math.max(0,lim-spent))} limit kaldı`:'Maaş ve bütçeni Ekle sekmesinden ayarla.';
+ const recent=[...arr].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,5);
+ $('recentList').innerHTML=recent.length?recent.map(entryHtml).join(''):'<div class="empty">Bu ay henüz işlem yok.</div>';
+ const debtTotal=data.debts.reduce((s,d)=>s+Math.max(0,Number(d.amount)-Number(d.paid||0)),0);$('debtSummary').textContent=fmt(debtTotal);
+ $('reportIncome').textContent=fmt(inc);$('reportExpense').textContent=fmt(exp);$('reportNet').textContent=fmt(net);$('reportNet').className=net<0?'red':'green';$('reportCount').textContent=arr.length;
+ const by={};arr.filter(e=>e.kind==='expense').forEach(e=>by[e.category]=(by[e.category]||0)+Number(e.amount));
+ const pairs=Object.entries(by).sort((a,b)=>b[1]-a[1]);$('categoryReport').innerHTML=pairs.length?pairs.map(([name,val])=>`<div style="margin:12px 0"><div class="row"><span>${escapeHtml(name)}</span><strong>${fmt(val)}</strong></div><div class="progress"><div style="width:${exp?val/exp*100:0}%"></div></div></div>`).join(''):'<div class="empty">Bu ay gider kaydı yok.</div>';
+ $('debtList').innerHTML=data.debts.length?data.debts.map(d=>{const left=Math.max(0,Number(d.amount)-Number(d.paid||0));return `<div class="entry"><div style="flex:1"><div class="entry-title">${escapeHtml(d.name)}</div><div class="entry-meta">${escapeHtml(d.type)} · Kalan ${fmt(left)} / ${fmt(d.amount)}</div><div class="actions" style="margin-top:8px"><button class="btn secondary" onclick="payDebt('${d.id}')">Ödeme ekle</button><button class="btn danger" onclick="deleteDebt('${d.id}')">Sil</button></div></div><div class="amount red">${fmt(left)}</div></div>`}).join(''):'<div class="empty">Henüz borç eklemedin.</div>';
+}
+function entryHtml(e){return `<div class="entry"><div style="min-width:0;flex:1"><div class="entry-title">${escapeHtml(e.note||e.category)}</div><div class="entry-meta">${escapeHtml(e.date)} · ${escapeHtml(e.category)}</div><div class="actions" style="margin-top:7px"><button class="btn secondary" onclick="deleteEntry('${e.id}')">Sil</button></div></div><div class="amount ${e.kind==='income'?'green':'red'}">${e.kind==='income'?'+':'−'}${fmt(e.amount)}</div></div>`}
+window.deleteEntry=id=>{if(confirm('Bu işlem silinsin mi?')){data.entries=data.entries.filter(e=>e.id!==id);save()}};
+window.deleteDebt=id=>{if(confirm('Bu borç kaydı silinsin mi?')){data.debts=data.debts.filter(d=>d.id!==id);save()}};
+window.payDebt=id=>{const d=data.debts.find(x=>x.id===id);if(!d)return;const left=Math.max(0,Number(d.amount)-Number(d.paid||0));const raw=prompt(`Ödeme tutarı (kalan ${fmt(left)}):`);if(raw===null)return;const n=Number(raw.replace(',','.'));if(!Number.isFinite(n)||n<=0){alert('Geçerli bir tutar gir.');return}d.paid=Math.min(Number(d.amount),Number(d.paid||0)+n);save()};
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));['overview','add','debts','reports'].forEach(id=>$(id).classList.toggle('hidden',id!==b.dataset.tab));}));
+$('goAdd').onclick=()=>document.querySelector('[data-tab="add"]').click();
+$('monthPick').value=monthNow();$('entryDate').value=dateNow();$('monthPick').addEventListener('change',render);$('kind').addEventListener('change',fillCategories);fillCategories();
+$('entryForm').addEventListener('submit',e=>{e.preventDefault();const amount=Number($('amount').value);if(!Number.isFinite(amount)||amount<=0)return alert('Tutar sıfırdan büyük olmalı.');data.entries.push({id:Date.now().toString(),kind:$('kind').value,amount,category:$('category').value,date:$('entryDate').value,note:$('note').value.trim()});$('amount').value='';$('note').value='';save();document.querySelector('[data-tab="overview"]').click()});
+$('budgetForm').addEventListener('submit',e=>{e.preventDefault();data.salary=Math.max(0,Number($('salary').value)||0);data.budget=Math.max(0,Number($('budget').value)||0);save();alert('Bütçen kaydedildi.')});
+$('debtForm').addEventListener('submit',e=>{e.preventDefault();const amount=Number($('debtAmount').value);if(amount<=0)return alert('Borç tutarı sıfırdan büyük olmalı.');data.debts.push({id:Date.now().toString(),name:$('debtName').value.trim(),amount,paid:0,type:$('debtType').value});$('debtForm').reset();save()});
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='butcecep-yedek-'+dateNow()+'.json';a.click();URL.revokeObjectURL(a.href)};
+$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const parsed=JSON.parse(await f.text());if(!Array.isArray(parsed.entries)||!Array.isArray(parsed.debts))throw Error();if(confirm('Mevcut kayıtların yerine yedek yüklensin mi?')){data={...defaultData,...parsed};save();alert('Yedek yüklendi.')}}catch(err){alert('Bu dosya geçerli bir Bütçe Cep yedeği değil.')}e.target.value=''};
+$('clearBtn').onclick=()=>{if(confirm('TÜM gelir, gider, bütçe ve borç kayıtların silinecek. Emin misin?')){data={...defaultData};save()}};
+$('salary').value=data.salary||'';$('budget').value=data.budget||'';
+render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>

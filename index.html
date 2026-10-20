@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Taksi Bütçe">
+<title>Taksi Bütçe Takip</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--blue:#2563eb;--green:#15803d;--red:#b91c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:white;padding:24px 16px 22px;padding-top:calc(22px + env(safe-area-inset-top))}
+header h1{margin:0;font-size:24px}header p{margin:6px 0 0;color:#cbd5e1;font-size:13px}
+main{max-width:1400px;margin:auto;padding:14px 12px 40px}
+.toolbar,.summary,.form-card,.table-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 12px #0f172a08}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding:14px;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--muted);font-weight:650;margin-bottom:5px}
+input,select,textarea{font:inherit;color:var(--ink);background:white;border:1px solid #cbd5e1;border-radius:9px;padding:10px;min-width:0;width:100%;outline-color:var(--blue)}
+input[type=number]{text-align:right}
+.field{min-width:130px;flex:1}.field.month{max-width:190px}
+button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer}
+.primary{background:var(--blue);color:white}.secondary{background:#e2e8f0;color:#0f172a}.danger{background:#fee2e2;color:#991b1b}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;margin-bottom:12px}
+.metric{padding:12px;border-radius:12px;background:#f8fafc;min-width:0}.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:19px;margin-top:7px;overflow-wrap:anywhere}.metric.green strong{color:var(--green)}.metric.red strong{color:var(--red)}
+.form-card{padding:14px;margin-bottom:12px}.form-card h2,.table-card h2{font-size:17px;margin:0 0 12px}
+.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.form-grid .wide{grid-column:span 2}.form-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.table-card{padding:14px;overflow:hidden}.table-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.table-wrap{overflow:auto;margin-top:10px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:1600px;font-size:12px}
+th,td{padding:10px 9px;border-bottom:1px solid var(--line);border-right:1px solid #f1f5f9;text-align:right;white-space:nowrap}
+th{position:sticky;top:0;background:#f8fafc;color:#475569;font-weight:750;z-index:1}
+th:first-child,td:first-child{text-align:left}td.note{text-align:left;max-width:180px;white-space:normal}
+tfoot td{font-weight:800;background:#eff6ff;border-bottom:0}
+.empty{text-align:center!important;color:var(--muted);padding:28px}
+.small{font-size:12px;color:var(--muted);line-height:1.5;margin:10px 2px 0}
+@media(max-width:700px){header h1{font-size:21px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid .wide{grid-column:span 2}.field{min-width:calc(50% - 10px)}.field.month{max-width:none}.metric strong{font-size:17px}}
+</style>
+</head>
+<body>
+<header><h1>🚕 Taksi Bütçe Takip</h1><p>Günlük kayıtlar, araç masrafları ve aylık hesap özeti</p></header>
+<main>
+<section class="toolbar">
+  <div class="field month"><label for="monthFilter">Aylık görünüm</label><input id="monthFilter" type="month"></div>
+  <button class="secondary" id="thisMonth">Bu ay</button>
+  <button class="secondary" id="exportCsv">CSV dışa aktar</button>
+  <button class="secondary" id="backup">Yedek indir</button>
+  <label class="secondary" style="padding:10px 12px;border-radius:10px;cursor:pointer">Yedek yükle <input id="restore" type="file" accept=".json,application/json" hidden></label>
+</section>
+<section class="summary" id="summary"></section>
+<section class="form-card">
+<h2 id="formTitle">Yeni günlük kayıt</h2>
+<form id="entryForm">
+<div class="form-grid">
+<div><label for="date">Tarih *</label><input id="date" type="date" required></div>
+<div><label for="income">Gelir (₺)</label><input id="income" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="revenue">Günlük ciro (₺)</label><input id="revenue" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="expense">Diğer gider (₺)</label><input id="expense" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="fuel">Yakıt gideri (₺)</label><input id="fuel" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="vehicle">Araç masrafları (₺)</label><input id="vehicle" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="maintenance">Tamir / bakım (₺)</label><input id="maintenance" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="breakdown">Arıza gideri (₺)</label><input id="breakdown" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="inspection">Araç muayene tarihi</label><input id="inspection" type="date"></div>
+<div><label for="meterInspection">Taksimetre muayene tarihi</label><input id="meterInspection" type="date"></div>
+<div><label for="driver">Şoföre kalan (₺)</label><input id="driver" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="owner">Araç sahibine kalan (₺)</label><input id="owner" type="number" min="0" step="0.01" value="0"></div>
+<div class="wide"><label for="notes">Not / açıklama</label><input id="notes" maxlength="250" placeholder="Örn. lastik değişimi, vardiya bilgisi..."></div>
+</div>
+<div class="form-actions"><button class="primary" type="submit" id="saveBtn">Kaydı ekle</button><button class="secondary" type="button" id="resetBtn">Temizle</button></div>
+</form>
+<p class="small">Kayıtlar bu cihazın tarayıcısında saklanır. Tarayıcı verilerini silmeden önce “Yedek indir” ile dosyanı kaydet. GitHub Pages verileri cihazlar arasında otomatik eşitlemez.</p>
+</section>
+<section class="table-card">
+<div class="table-head"><h2>Günlük kayıtlar</h2><button class="danger" id="clearMonth">Bu ayın kayıtlarını sil</button></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Tarih</th><th>Gelir</th><th>Günlük ciro</th><th>Diğer gider</th><th>Yakıt</th><th>Araç masrafı</th><th>Tamir/bakım</th><th>Arıza</th><th>Muayene tarihi</th><th>Taksimetre muayenesi</th><th>Şoföre kalan</th><th>Araç sahibine kalan</th><th>Toplam gider</th><th>Net (gelir − gider)</th><th>Not</th><th>İşlem</th></tr></thead>
+<tbody id="rows"></tbody><tfoot id="totals"></tfoot>
+</table></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const fields=['date','income','revenue','expense','fuel','vehicle','maintenance','breakdown','inspection','meterInspection','driver','owner','notes'];
+const moneyKeys=['income','revenue','expense','fuel','vehicle','maintenance','breakdown','driver','owner'];
+let entries=[], editingId=null;
+const today=new Date(); const localDate=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+$('date').value=localDate;$('monthFilter').value=localDate.slice(0,7);
+try{entries=JSON.parse(localStorage.getItem('taxiBudgetEntries')||'[]')}catch(e){entries=[]}
+const num=v=>Number(v)||0;
+const money=v=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2}).format(num(v));
+const displayDate=v=>v?new Date(v+'T12:00:00').toLocaleDateString('tr-TR'):'—';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function save(){localStorage.setItem('taxiBudgetEntries',JSON.stringify(entries));render()}
+function monthEntries(){const m=$('monthFilter').value;return entries.filter(e=>!m||e.date?.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date))}
+function total(e){return num(e.expense)+num(e.fuel)+num(e.vehicle)+num(e.maintenance)+num(e.breakdown)}
+function net(e){return num(e.income)-total(e)}
+function sum(list,key){return list.reduce((s,e)=>s+num(e[key]),0)}
+function render(){
+ const list=monthEntries(), expenseTotal=list.reduce((s,e)=>s+total(e),0), incomeTotal=sum(list,'income');
+ const cards=[['Toplam gelir',money(incomeTotal),'green'],['Günlük ciro toplamı',money(sum(list,'revenue')),''],['Toplam gider',money(expenseTotal),'red'],['Net bakiye',money(incomeTotal-expenseTotal),incomeTotal-expenseTotal>=0?'green':'red'],['Yakıt toplamı',money(sum(list,'fuel')),''],['Şoföre kalan',money(sum(list,'driver')),''],['Araç sahibine kalan',money(sum(list,'owner')),''],['Kayıt sayısı',String(list.length),'']];
+ $('summary').innerHTML=cards.map(c=>`<div class="metric ${c[2]}"><span>${c[0]}</span><strong>${c[1]}</strong></div>`).join('');
+ const cols=['income','revenue','expense','fuel','vehicle','maintenance','breakdown','driver','owner'];
+ $('rows').innerHTML=list.length?list.map(e=>`<tr>
+ <td>${displayDate(e.date)}</td><td>${money(e.income)}</td><td>${money(e.revenue)}</td><td>${money(e.expense)}</td><td>${money(e.fuel)}</td><td>${money(e.vehicle)}</td><td>${money(e.maintenance)}</td><td>${money(e.breakdown)}</td><td>${displayDate(e.inspection)}</td><td>${displayDate(e.meterInspection)}</td><td>${money(e.driver)}</td><td>${money(e.owner)}</td><td>${money(total(e))}</td><td style="color:${net(e)>=0?'#15803d':'#b91c1c'}">${money(net(e))}</td><td class="note">${esc(e.notes||'')}</td><td><button class="secondary" onclick="editEntry('${e.id}')">Düzenle</button> <button class="danger" onclick="deleteEntry('${e.id}')">Sil</button></td></tr>`).join(''):'<tr><td colspan="16" class="empty">Bu ay için kayıt yok. İlk günlük kaydını yukarıdan ekleyebilirsin.</td></tr>';
+ $('totals').innerHTML=`<tr><td>AYLIK TOPLAM</td><td>${money(sum(list,'income'))}</td><td>${money(sum(list,'revenue'))}</td><td>${money(sum(list,'expense'))}</td><td>${money(sum(list,'fuel'))}</td><td>${money(sum(list,'vehicle'))}</td><td>${money(sum(list,'maintenance'))}</td><td>${money(sum(list,'breakdown'))}</td><td>—</td><td>—</td><td>${money(sum(list,'driver'))}</td><td>${money(sum(list,'owner'))}</td><td>${money(expenseTotal)}</td><td>${money(incomeTotal-expenseTotal)}</td><td colspan="2">${list.length} kayıt</td></tr>`;
+}
+function resetForm(){editingId=null;$('entryForm').reset();$('date').value=localDate;['income','revenue','expense','fuel','vehicle','maintenance','breakdown','driver','owner'].forEach(k=>$(k).value='0');$('formTitle').textContent='Yeni günlük kayıt';$('saveBtn').textContent='Kaydı ekle'}
+$('entryForm').addEventListener('submit',ev=>{ev.preventDefault();const item={id:editingId||crypto.randomUUID()};fields.forEach(k=>item[k]=moneyKeys.includes(k)?num($(k).value):$(k).value.trim());if(editingId)entries=entries.map(e=>e.id===editingId?item:e);else entries.push(item);save();resetForm()});
+$('resetBtn').onclick=resetForm;$('monthFilter').onchange=render;$('thisMonth').onclick=()=>{$('monthFilter').value=localDate.slice(0,7);render()};
+window.editEntry=id=>{const e=entries.find(x=>x.id===id);if(!e)return;editingId=id;fields.forEach(k=>$(k).value=e[k]??(moneyKeys.includes(k)?0:''));$('formTitle').textContent='Kaydı düzenle';$('saveBtn').textContent='Değişiklikleri kaydet';window.scrollTo({top:0,behavior:'smooth'})};
+window.deleteEntry=id=>{if(confirm('Bu kayıt silinsin mi?')){entries=entries.filter(e=>e.id!==id);if(editingId===id)resetForm();save()}};
+$('clearMonth').onclick=()=>{const m=$('monthFilter').value;if(!confirm(`${m||'Tüm'} döneme ait kayıtlar silinsin mi? Bu işlem geri alınamaz.`))return;entries=entries.filter(e=>m&&!e.date?.startsWith(m));save()};
+function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
+$('backup').onclick=()=>download('taksi-butce-yedek.json',JSON.stringify(entries,null,2),'application/json');
+$('restore').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data))throw Error();if(confirm('Yedek içe aktarılsın mı? Mevcut kayıtların üzerine eklenir.')){const ids=new Set(entries.map(e=>e.id));entries.push(...data.filter(e=>!ids.has(e.id)));save();alert('Yedek içe aktarıldı.')}}catch(e){alert('Dosya okunamadı. Geçerli bir JSON yedeği seç.')}ev.target.value=''};
+$('exportCsv').onclick=()=>{const list=monthEntries(),headers=['Tarih','Gelir','Günlük ciro','Diğer gider','Yakıt gideri','Araç masrafları','Tamir bakım','Arıza','Araç muayene tarihi','Taksimetre muayene tarihi','Şoföre kalan','Araç sahibine kalan','Toplam gider','Net','Not'];const data=list.map(e=>[e.date,e.income,e.revenue,e.expense,e.fuel,e.vehicle,e.maintenance,e.breakdown,e.inspection,e.meterInspection,e.driver,e.owner,total(e),net(e),e.notes]);const csv=[headers,...data].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');download(`taksi-butce-${$('monthFilter').value||'tum-kayitlar'}.csv`,'\ufeff'+csv,'text/csv;charset=utf-8')};
+render();
+</script>
+</body>
+</html>
